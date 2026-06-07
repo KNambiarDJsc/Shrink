@@ -1,15 +1,3 @@
-//! mcp-token-gateway — transparent MCP proxy that compacts verbose tool
-//! schemas and routes across multiple upstream servers.
-//!
-//! Two operation modes:
-//!
-//! Stdio (default):
-//!   mcp-token-gateway [--compression high] -- npx -y @org/server
-//!   mcp-token-gateway --config gateway.toml
-//!
-//! SSE/HTTP (requires --features sse build):
-//!   mcp-token-gateway --listen 0.0.0.0:3000 --config gateway.toml
-
 mod compactor;
 mod config;
 mod ledger;
