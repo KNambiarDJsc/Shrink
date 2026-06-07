@@ -1,0 +1,11 @@
+compression = "high"
+
+[[servers]]
+name    = "alpha"
+command = "python3"
+args    = ["tests/mock_upstream.py", "search_alpha"]
+
+[[servers]]
+name    = "beta"
+command = "python3"
+args    = ["tests/mock_upstream.py", "lookup_beta"]

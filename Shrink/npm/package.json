@@ -1,0 +1,27 @@
+{
+    "name": "mcp-token-gateway",
+    "version": "0.1.0",
+    "description": "Transparent MCP proxy that compacts verbose tool schemas to save context-window tokens.",
+    "keywords": [
+        "mcp",
+        "llm",
+        "ai",
+        "proxy",
+        "context-window"
+    ],
+    "homepage": "https://github.com/YOUR_ORG/mcp-token-gateway",
+    "license": "MIT",
+    "bin": {
+        "mcp-token-gateway": "./bin.js"
+    },
+    "scripts": {
+        "postinstall": "node install.js"
+    },
+    "files": [
+        "bin.js",
+        "install.js"
+    ],
+    "engines": {
+        "node": ">=18"
+    }
+}

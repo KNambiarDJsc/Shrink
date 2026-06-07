@@ -1,0 +1,79 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: ${{ matrix.target }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # macOS (Apple Silicon)
+          - { target: aarch64-apple-darwin,    os: macos-14 }
+          # macOS (Intel)
+          - { target: x86_64-apple-darwin,     os: macos-13 }
+          # Linux (GNU, most servers)
+          - { target: x86_64-unknown-linux-gnu, os: ubuntu-22.04 }
+          # Linux (musl, static binary — good for Docker scratch images)
+          - { target: x86_64-unknown-linux-musl, os: ubuntu-22.04 }
+          # Linux ARM64 (Raspberry Pi, AWS Graviton)
+          - { target: aarch64-unknown-linux-gnu, os: ubuntu-22.04 }
+          # Windows
+          - { target: x86_64-pc-windows-msvc, os: windows-latest }
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      # musl cross-compiler
+      - name: Install musl tools
+        if: matrix.target == 'x86_64-unknown-linux-musl'
+        run: sudo apt-get install -y musl-tools
+
+      # ARM64 cross-compiler
+      - name: Install ARM64 cross tools
+        if: matrix.target == 'aarch64-unknown-linux-gnu'
+        run: sudo apt-get install -y gcc-aarch64-linux-gnu
+
+      - name: Build (stdio only)
+        run: cargo build --release --target ${{ matrix.target }}
+
+      - name: Build (with SSE feature)
+        run: cargo build --release --features sse --target ${{ matrix.target }}
+
+      # ── Package ──────────────────────────────────────────────────────────
+      - name: Package (Unix)
+        if: runner.os != 'Windows'
+        run: |
+          TAG=${GITHUB_REF_NAME}
+          BIN=target/${{ matrix.target }}/release/mcp-token-gateway
+          ARCHIVE=mcp-token-gateway-${TAG}-${{ matrix.target }}.tar.gz
+          tar czf "$ARCHIVE" -C "$(dirname $BIN)" "$(basename $BIN)"
+          echo "ASSET=$ARCHIVE" >> "$GITHUB_ENV"
+
+      - name: Package (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $tag = $env:GITHUB_REF_NAME
+          $bin = "target\${{ matrix.target }}\release\mcp-token-gateway.exe"
+          $archive = "mcp-token-gateway-$tag-${{ matrix.target }}.zip"
+          Compress-Archive -Path $bin -DestinationPath $archive
+          echo "ASSET=$archive" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Upload release asset
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ env.ASSET }}
+          generate_release_notes: true
